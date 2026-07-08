@@ -1,4 +1,6 @@
-## Day 1 — July 8, 2026
+## July 8, 2026
+
+#### environment & project setup
 
 - Set up GitHub repo (GSU-weather-dashboard), connected local PyCharm project
 - Created project folder structure (src/, dashboard/, data/raw/)
@@ -13,7 +15,9 @@
 - Early observation: API returns data nested by parameter then by date
   (not row-per-date); will need reshaping in clean_data.py. Data source
   is MERRA2 (reanalysis model, not direct station observations).
-#### Day 1 (continued) — schema design
+
+#### schema design
+
 - Decided to expand beyond original 2 variables (temperature, precipitation)
   to 6 total: T2M, PRECTOTCORR, RH2M, WS2M, ALLSKY_SFC_SW_DWN, PS
 - Designed and created schema.sql: single table `daily_weather`, one row
@@ -27,3 +31,34 @@
   with all 7 columns (date + 6 variables) and comments intact
 - Learned: schema/column changes don't require code changes elsewhere yet
   since no data has been loaded; safe to iterate on schema early
+
+#### db.py, fetch_data.py, clean_data.py
+
+- Built db.py: loads DB credentials from .env using python-dotenv, builds
+  a SQLAlchemy connection string, creates a reusable engine object.
+  Tested successful connection to weather_project database.
+- Built fetch_data.py: wrapped the NASA POWER API call in a reusable
+  function (fetch_weather_data) taking start/end date arguments, requesting
+  all 6 variables at once. Added raise_for_status() so failed requests
+  raise a clear error instead of failing silently.
+- Built clean_data.py: reshapes the API's nested JSON (parameter -> date ->
+  value) into a flat table, one row per date. Converts date strings to
+  real datetime objects, renames API variable names to match schema.sql
+  column names, replaces NASA's -999 missing-value code with NaN.
+- Verified: 365 rows x 7 columns for full year 2025, matches expected shape.
+- Bugs caught along the way: case-sensitive JSON key typo (Parameter vs
+  parameter), typo in column rename mapping (ALLSHY vs ALLSKY), wrong
+  missing-value placeholder (-99 vs -999).
+
+#### load_data.py, full pipeline working
+
+- Built load_data.py: loads cleaned DataFrame into daily_weather using
+  REPLACE INTO with named parameters (safe against SQL injection, and
+  re-runnable without creating duplicate rows for the same date).
+- Ran full pipeline end-to-end for the first time: fetch_data -> clean_data
+  -> load_data. Confirmed 365 rows loaded into MariaDB.
+- Bugs caught: missing VALUES clause in first draft, repeated column-name
+  mismatch (kwh2 vs kwhm2) between SQL and Python dict keys.
+- Milestone: full data pipeline (API -> clean -> DB) is functional.
+-Verified in MariaDB directly: SELECT COUNT(*) returned 365, spot-checked
+  first 5 rows, values look correct across all 6 variables.
