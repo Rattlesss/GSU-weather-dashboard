@@ -62,3 +62,14 @@
 - Milestone: full data pipeline (API -> clean -> DB) is functional.
 -Verified in MariaDB directly: SELECT COUNT(*) returned 365, spot-checked
   first 5 rows, values look correct across all 6 variables.
+
+#### dashboard build
+
+- Built dashboard/app.py: Streamlit dashboard with sidebar date filter,
+  summary metric cards (hottest/coldest/wettest day, avg humidity),
+  tabbed layout across 3 sections, and a correlation heatmap
+- Added axis constraints (minallowed/maxallowed) so panning/zooming can't
+  drift past the actual data range
+- Wrote README.md with setup instructions and an honest note on AI use
+- Project complete: full pipeline (fetch -> clean -> load) plus
+  interactive dashboard, matching original Day 1 plan
