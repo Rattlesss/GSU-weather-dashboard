@@ -121,3 +121,114 @@
     date
 - Merged feature/docker-support into main via PR after verification
 
+## August 8, 2026
+
+#### Personal Dev Explanation
+
+- Before we get into the devlog for today, I have some explaining to do.
+- Installed / Configured a new Fedora KDE Plasma system today, 
+has all the same dev features as my MacOS setup!
+- Pulled the entire project from the Github repo, 
+first time ever doing it that way. Before today, I could do 
+everything locally on my trusty Macbook Neo.
+- The setup from repo process blows currently. Doing the config is just awful.
+- Also learned the code is wildly unoptimized. It seemed to be pulling API
+requests TWICE at runtime. Once during the fetch phase (as it should), 
+and then AGAIN at the load phase. Why??
+- I had to fix that. I can't just overlook both an awful setup process and
+bad code. That just ain't right. So thats what I did today. It's 1am. I wanna go to bed.
+- If you're an end user who tried to use my DB/Dashboard before this, I'm so sorry. 
+- So very sorry.
+
+#### terminal logging (fetch_data.py)
+- Replaced messy print() calls with Python's built-in logging module -
+  logging.basicConfig() configured once at the top of the file (level
+  INFO, timestamp + level + message format, HH:MM:SS timestamps)
+- logger = logging.getLogger(__name__) used instead of the root logger
+  directly, so log output is scoped to this module rather than global
+- Logged each meaningful step of the year-by-year fetch loop: start of
+  the whole range fetch (with year count), each year being requested,
+  how many days came back per year, and the sleep between requests -
+  gives a live progress trail during the ~34-60s multi-year fetch
+  instead of a silent wait
+- Chose logging over print() specifically because it timestamps every
+  line automatically and can have its verbosity level adjusted later
+  without touching each call site individually
+- This is exactly how I figured out that the code was making 
+multiple API pulls. It's always great when a simple QoL change
+ends up costing you multiple hours.
+- Maybe this is the end of QoL changes? Who knows.
+
+#### run_pipeline.py
+
+- Added a single orchestrator script (fetch -> clean -> save CSV -> load)
+  after realizing fetch_data.py and load_data.py's __main__ blocks each
+  independently called the fetch function - meant NASA's API was being
+  hit twice for the same data on every full run
+- fetch_data.py's __main__ now fetches once, cleans, and saves the
+  result to data/weather_2006_2026.csv - nothing downstream re-fetches
+- load_data.py's __main__ now reads that CSV (with parse_dates=["date"])
+  instead of calling the API - lets the DB be reloaded/reinitialized
+  without burning API calls, useful after wiping the Docker volume
+  
+#### .gitignore
+
+- Added data/*.csv - the generated CSV is regeneratable from the API
+  and sizeable (7,500+ rows), no reason to track it in git
+  
+#### bug fixes caught while wiring this together
+
+- Several syntax errors from manual edits (missing parens/quotes,
+  swapped underscores, mismatched CSV_PATH casing) - caught one at a
+  time by actually reading the tracebacks instead of guessing. Who knew
+  tracebacks could be so helpful. In my defense it's 1am
+- Missing `import time` in fetch_data.py (used by the sleep-between-
+  requests rate limiting, previously untested until run end-to-end)
+- CSV save initially failed with an OSError - was running the script
+  from src/ instead of repo root, so the relative data/ path didn't
+  resolve. Fixed by running from repo root: python src/run_pipeline.py
+  
+#### cross-machine Docker verification (Fedora)
+
+- Docker on Fedora runs as a systemd service, not a background app -
+  confirmed via systemctl status docker, no equivalent to Docker
+  Desktop's menu bar indicator
+- docker-compose (hyphenated) isn't installed on Fedora - Docker
+  Desktop's standalone binary vs. the docker compose plugin (space)
+  that ships via dnf install docker-compose-plugin
+- MariaDB's container image ships its CLI as `mariadb`, not `mysql` -
+  docker exec ... mysql fails with executable not found; mariadb is
+  the correct binary name in newer MariaDB images
+- Hit repeated access-denied errors that turned out to be several
+  independent things stacking: mistyped passwords at hidden prompts,
+  and this Fedora machine's .env using different DB_NAME
+  (weather_db) and DB_ROOT_PASSWORD than assumed. Probally an issue with .env.example,
+  given I used it to build the .env file on this new machine
+- Set git user.name/user.email on Fedora machine (previously unset,
+  commits were auto-attributing to a generic hostname-based identity)
+  
+#### verification
+
+- Ran run_pipeline.py end-to-end from repo root on Fedora: 21 years
+  fetched (2006-2026), cleaned, saved to CSV, loaded into daily_weather
+- Confirmed via mycli: 7,525 rows, MIN(date)/MAX(date) = 2006-01-01 to
+  2026-08-08, only 4 NULL rows (expected - NASA hasn't finalized the
+  most recent few days yet)
+- Committed on database-optimization branch, pushed, not yet merged
+  to main - progress bar and log cleanup planned for tomorrow before
+  merging
+
+### Upcoming Plans
+- Add tqdm instead of using the terminal logging. 
+The terminal logging is unimaginably ugly and cluttered.
+- Fix .env.example - its placeholder DB_NAME (weather_db) never
+  actually matched the real convention used on my other machine.
+   Copied the template as-is when setting up
+  Fedora, which is exactly why the two .env files disagreed and
+  caused repeated mycli/MariaDB access issues tonight.
+  I've had similar problems in the past too,
+  even locally on my Macbook. Which has the real .env on it!
+ Wayyy too annoying to ignore at this point.
+- Docker optimizations. Maybe.
+- Oh and also Podman. Maybe. Since Fedora seems cool.
+- UPDATING DOCUMENTATION. I know it's behind. Woefully so.
