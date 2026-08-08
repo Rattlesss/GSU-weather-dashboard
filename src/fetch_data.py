@@ -89,7 +89,6 @@ if __name__ == "__main__":
     today = date.today().strftime("%Y%m%d")
     raw = fetch_weather_data_range("20060101", today)
     cleaned = clean_weather_data(raw)
-
-    cleaned.to_csv:"data/weather_2006_2026.csv", index=False)
-    print(f"Saved{len(cleaned)} rows to data/weather_2006_2026.csv")
+    cleaned.to_csv("data/weather_2006_2026.csv", index=False)
+    print(f"Saved {len(cleaned)} rows to data/weather_2006_2026.csv")
     

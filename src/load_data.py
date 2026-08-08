@@ -54,6 +54,6 @@ def load_weather_data(df: pd.DataFrame) -> None:
 if __name__ == "__main__":
     import pandas as pd
 
-    cleaned = pd.read.csv("data/weather_2006_2026.csv"), parse_dates=["date"])
+    cleaned = pd.read_csv("data/weather_2006_2026.csv", parse_dates=["date"])
     load_weather_data(cleaned)
-    print(f"Loaded {len(cleaned)} rows into daily_weather)
+    print(f"Loaded {len(cleaned)} rows into daily_weather")
