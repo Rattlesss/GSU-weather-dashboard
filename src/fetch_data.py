@@ -37,6 +37,11 @@ def fetch_weather_data(start_date: str, end_date: str) -> dict:
     response.raise_for_status()
     return response.json()
 
+# Adds terminal colors during write (ANSI used for compatibility)
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
 def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: float = 1.0) -> dict:
     """
     Fetch daily weather data across a long date range by looping
@@ -55,16 +60,22 @@ def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: floa
     end_year = int(end_date[:4])
     merged = None
     years = range(start_year, end_year + 1)
+    pbar = tqdm(years, desc="Fetching NASA POWER data", unit='year')
+    total_days = 0   # running count shown in progress bar
 
-    for year in tqdm(years, desc="Fetching NASA POWER data", unit="year"):
+    for year in pbar:
         chunk_start = start_date if year == start_year else f"{year}0101"
         chunk_end = end_date if year == end_year else f"{year}1231"
 
         chunk = fetch_weather_data(chunk_start, chunk_end)
         num_days = len(next(iter(chunk["properties"]["parameter"].values())))
-
+        total_days += num_days
+        pbar.set_postfix(year=year, days=total_days)
+    
         if num_days < 360:
-            tqdm.write(f"Note: {year} only returned {num_days} days (Expected ~365)")
+            # NASA sometimes only returns partial years (Current year, missing data, etc)
+            # Flags gaps without stopping the whole fetch
+            tqdm.write(f"{YELLOW}Note:{RESET} {year} only returned {CYAN}{num_days}{RESET} days (Expected ~365){RESET}")
 
         if merged is None:
             merged = chunk
@@ -78,6 +89,8 @@ def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: floa
     return merged
 
 if __name__ == "__main__":
+    # Runs when the file is executed directly ("python src/fetch_data.py")
+    # Skipped when functions imported elsewhere ("python run_pipeline.py")
     from datetime import date
     from clean_data import clean_weather_data
     today = date.today().strftime("%Y%m%d")
