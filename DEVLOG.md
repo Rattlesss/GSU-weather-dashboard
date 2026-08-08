@@ -74,39 +74,50 @@
 - Project complete: full pipeline (fetch -> clean -> load) plus
   interactive dashboard, matching original Day 1 plan
 
-  ## August 3, 2026
-  #### docker-compose.yml
-  - Added MariaDB 11 service, containerized with a named volume
+
+
+## August 3, 2026
+
+#### docker-compose.yml
+
+- Added MariaDB 11 service, containerized with a named volume
     (mariadb_data) so data persists across container restarts
-  - Mounted src/schema.sql as the init script - daily_weather table
+- Mounted src/schema.sql as the init script - daily_weather table
     gets created automatically on first container boot, no manual
     setup needed
-  - Exposed on host port 3307 (not 3306) to avoid clashing with any
+- Exposed on host port 3307 (not 3306) to avoid clashing with any
     local native MariaDB install
-  - Added a healthcheck (--connect --innodb_initialized) so readiness
+- Added a healthcheck (--connect --innodb_initialized) so readiness
     can be checked before the app or a script tries to connect
-  #### .env.example
-  - Added a template documenting the required env vars
+    
+#### .env.example
+
+- Added a template documenting the required env vars
     (DB_ROOT_PASSWORD, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST,
     DB_PORT) with no real secrets, so the repo is cloneable without
     guessing at what .env needs to contain
-  #### bug: user creation silently failing
-  - MARAIDB_PASSWORD typo (should be MARIADB_PASSWORD) in the
+    
+#### bug: user creation silently failing
+
+- MARAIDB_PASSWORD typo (should be MARIADB_PASSWORD) in the
     environment block meant MARIADB_USER had no valid password to
     pair with - container started fine and created the database, but
     never created the weather_app user
-  - Caught by comparing docker-compose logs db output against a
+- Caught by comparing docker-compose logs db output against a
     working MariaDB entrypoint log - the "Creating user weather_app"
     line was simply missing
-  - Fixed the key name, wiped the volume (docker-compose down -v),
+- Fixed the key name, wiped the volume (docker-compose down -v),
     and reinitialized clean
-  #### verification
-  - Brought the container up with docker-compose up -d, confirmed
+    
+#### verification
+
+- Brought the container up with docker-compose up -d, confirmed
     status reached healthy
-  - Connected via mycli as the scoped weather_app user (not root) -
+- Connected via mycli as the scoped weather_app user (not root) -
     confirmed via docker exec ... env that MARIADB_USER/PASSWORD
     matched what mycli was being given
-  - Ran SHOW TABLES / DESCRIBE daily_weather - confirmed all 7
+- Ran SHOW TABLES / DESCRIBE daily_weather - confirmed all 7
     columns present and matching schema.sql, primary key intact on
     date
-  - Merged feature/docker-support into main via PR after verification
+- Merged feature/docker-support into main via PR after verification
+
