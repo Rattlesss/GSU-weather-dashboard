@@ -1,6 +1,7 @@
 import time
 import logging
 import requests
+from tqdm import tqdm
 
 logging.basicConfig(
     level=logging.INFO,
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 LATITUDE = 32.4194
 LONGITUDE = -81.7767
 PARAMETERS = "T2M,PRECTOTCORR,RH2M,WS2M,ALLSKY_SFC_SW_DWN,PS"
-
 
 def fetch_weather_data(start_date: str, end_date: str) -> dict:
     """
@@ -34,9 +34,8 @@ def fetch_weather_data(start_date: str, end_date: str) -> dict:
         "format": "JSON"
     }
     response = requests.get(url, params=params)
-    response.raise_for_status()  # raises an error if the
+    response.raise_for_status()
     return response.json()
-
 
 def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: float = 1.0) -> dict:
     """
@@ -55,18 +54,17 @@ def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: floa
     start_year = int(start_date[:4])
     end_year = int(end_date[:4])
     merged = None
+    years = range(start_year, end_year + 1)
 
-    logger.info(f"Starting fetch: {start_date} to {end_date} ({end_year - start_year + 1} years)")
-
-    for year in range(start_year, end_year + 1):
+    for year in tqdm(years, desc="Fetching NASA POWER data", unit="year"):
         chunk_start = start_date if year == start_year else f"{year}0101"
         chunk_end = end_date if year == end_year else f"{year}1231"
 
-        logger.info(f"Fetching {year} ({chunk_start} to {chunk_end})...")
         chunk = fetch_weather_data(chunk_start, chunk_end)
-
         num_days = len(next(iter(chunk["properties"]["parameter"].values())))
-        logger.info(f"Received {num_days} days of data for {year}")
+
+        if num_days < 360:
+            tqdm.write(f"Note: {year} only returned {num_days} days (Expected ~365)")
 
         if merged is None:
             merged = chunk
@@ -75,20 +73,15 @@ def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: floa
                 merged["properties"]["parameter"][param].update(values)
 
         if year != end_year:
-            logger.info(f"Sleeping {sleep_seconds}s before next request...")
             time.sleep(sleep_seconds)
 
-    logger.info("Fetch complete for all years.")
     return merged
-
 
 if __name__ == "__main__":
     from datetime import date
     from clean_data import clean_weather_data
-
     today = date.today().strftime("%Y%m%d")
     raw = fetch_weather_data_range("20060101", today)
     cleaned = clean_weather_data(raw)
     cleaned.to_csv("data/weather_2006_2026.csv", index=False)
     print(f"Saved {len(cleaned)} rows to data/weather_2006_2026.csv")
-    
