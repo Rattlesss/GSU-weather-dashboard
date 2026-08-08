@@ -84,6 +84,12 @@ def fetch_weather_data_range(start_date: str, end_date: str, sleep_seconds: floa
 
 if __name__ == "__main__":
     from datetime import date
+    from clean_data import clean_weather_data
+
     today = date.today().strftime("%Y%m%d")
-    data = fetch_weather_data_range("20060101", today)
-    print(data["properties"]["parameter"].keys())
+    raw = fetch_weather_data_range("20060101", today)
+    cleaned = clean_weather_data(raw)
+
+    cleaned.to_csv:"data/weather_2006_2026.csv", index=False)
+    print(f"Saved{len(cleaned)} rows to data/weather_2006_2026.csv")
+    
