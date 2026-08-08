@@ -219,3 +219,6 @@ __marimo__/
 
 # Setup checklist
 .day1_setup.md
+
+# Data/CSV folder
+data/*.csv
