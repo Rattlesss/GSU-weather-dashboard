@@ -52,13 +52,8 @@ def load_weather_data(df: pd.DataFrame) -> None:
 
 
 if __name__ == "__main__":
-    from datetime import date
+    import pandas as pd
 
-    from fetch_data import fetch_weather_data_range
-    from clean_data import clean_weather_data
-
-    today = date.today().strftime("%Y%m%d")
-    raw = fetch_weather_data_range("20060101", today)
-    cleaned = clean_weather_data(raw)
+    cleaned = pd.read.csv("data/weather_2006_2026.csv"), parse_dates=["date"])
     load_weather_data(cleaned)
-    print(f"Loaded {len(cleaned)} rows into daily_weather")
+    print(f"Loaded {len(cleaned)} rows into daily_weather)
