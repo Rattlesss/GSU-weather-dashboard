@@ -121,6 +121,8 @@
     date
 - Merged feature/docker-support into main via PR after verification
 
+
+
 ## August 8, 2026
 
 #### Personal Dev Explanation
@@ -220,15 +222,75 @@ ends up costing you multiple hours.
 
 ### Upcoming Plans
 - Add tqdm instead of using the terminal logging. 
-The terminal logging is unimaginably ugly and cluttered.
+ The terminal logging is unimaginably ugly and cluttered.
 - Fix .env.example - its placeholder DB_NAME (weather_db) never
   actually matched the real convention used on my other machine.
-   Copied the template as-is when setting up
+  Copied the template as-is when setting up
   Fedora, which is exactly why the two .env files disagreed and
   caused repeated mycli/MariaDB access issues tonight.
   I've had similar problems in the past too,
   even locally on my Macbook. Which has the real .env on it!
- Wayyy too annoying to ignore at this point.
+  Wayyy too annoying to ignore at this point.
 - Docker optimizations. Maybe.
 - Oh and also Podman. Maybe. Since Fedora seems cool.
 - UPDATING DOCUMENTATION. I know it's behind. Woefully so.
+
+
+
+## August 9, 2026
+
+#### Dev notes
+
+- Today was pretty slow. Hit a venv error like an idiot. 
+  Installed packages to Fedora before realizing what I was doing.
+  Wasn't too bad, just needed pip for something. 
+- Note to self: when you swap machines, ensure you're in the venv
+- Will probally be getting more active with this project. Have some fun things planned.
+
+#### fetch_data.py - progress bar & colored output
+- Replaced the per-year logger.info() calls with a live tqdm progress
+  bar (desc="Fetching NASA POWER data", unit="year") - routine
+  "fetching year X / received Y days / sleeping" chatter is now just
+  the bar advancing, instead of 60+ scrolling log lines per run.
+- Added a postfix on the bar (pbar.set_postfix(year=year,
+  days=total_days)) - shows the current year and running row count
+  live, rather than only knowing progress by percentage.
+- Kept one thing worth still calling out explicitly: any year
+  returning fewer than 360 days gets a tqdm.write() note, since the
+  bar alone wouldn't surface that.
+- Colored that note with raw ANSI codes (yellow for "Note:", cyan for
+  the day count) rather than pulling in a new dependency - considered
+  rich for this, decided it's overkill for one colored line.
+- Caught a handful of small bugs while wiring this in: a typo in the
+  RESET escape code (\093 instead of \033), color constants
+  accidentally scoped inside the loop instead of once above the
+  function, and total_days never actually being incremented in an
+  earlier draft.
+- Added a short comment on the `if __name__ == "__main__":` guard -
+  not obvious at a glance why it's there, worth the one-liner.
+
+#### verification
+- Ran run_pipeline.py twice back to back - colored output rendered
+  correctly in terminal, bar/postfix updated live, both runs loaded
+  7,525 rows in ~34-35s with identical results.
+
+#### theorizing, not yet implemented: incremental fetching
+- Current pipeline always re-fetches the full 2006-2026 range on every
+  run, even though only the last ~90 days (NASA's not-yet-finalized
+  window) plus any new days actually change.
+- Main Idea: check MAX(date) already in daily_weather (or
+  in the CSV), then only fetch from ~90 days before that through
+  'today' - existing REPLACE INTO logic already handles the overlap
+  safely.
+- Doesn't require anything running constantly - this only matters for
+  runs after the initial backfill, and stays a manually-triggered
+  script until/unless a scheduler gets added later.
+- Not implemented yet - next optimization in line. Maybe. Needs more research.
+
+### Still open
+- Incremental fetching (see above)
+- Dashboard redesign - not started
+- .env.example / DB_NAME convention still inconsistent between machines
+- Error handling/retries on the fetch loop
+- database-optimization branch verified working, not yet merged to main
+- Potential webpage integration using GCP. Part of broader idea. Far on timeline.
