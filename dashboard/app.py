@@ -25,11 +25,11 @@ except Exception as e:
     st.stop()
 
 # ---- Header ----
-st.title("GSU / Bulloch County Weather Dashboard — 2025")
+st.title("GSU / Bulloch County Weather Dashboard")
 st.caption("Data source: NASA POWER API (MERRA2 reanalysis model) · "
            "Location: 32.4194°N, -81.7767°W")
 st.markdown(
-    "This dashboard explores a full year of daily weather data for the "
+    "This dashboard explores 20 years of daily weather data for the "
     "Georgia Southern University area, pulled from NASA's POWER API. "
     "Built as a first project in a personal learning series toward a GIS-based exploration."
 )
@@ -68,6 +68,14 @@ x_min = filtered_df["date"].min()
 x_max = filtered_df["date"].max()
 
 # ---- Summary metrics ----
+st.markdown("""
+<style>
+[data-testid="stMetricDelta"] svg {
+    display: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
 col1, col2, col3, col4 = st.columns(4)
 
 hottest_day = filtered_df.loc[filtered_df["temperature_c"].idxmax()]
@@ -76,14 +84,12 @@ wettest_day = filtered_df.loc[filtered_df["precipitation_mm"].idxmax()]
 avg_humidity = filtered_df["humidity_pct"].mean()
 
 col1.metric("Hottest Day", f"{hottest_day['temperature_c']:.1f} °C",
-            hottest_day["date"].strftime("%b %d"))
+            hottest_day["date"].strftime("%b %d, %Y"))
 col2.metric("Coldest Day", f"{coldest_day['temperature_c']:.1f} °C",
-            coldest_day["date"].strftime("%b %d"))
+            coldest_day["date"].strftime("%b %d, %Y"))
 col3.metric("Wettest Day", f"{wettest_day['precipitation_mm']:.1f} mm",
-            wettest_day["date"].strftime("%b %d"))
+            wettest_day["date"].strftime("%b %d, %Y"))
 col4.metric("Avg Humidity", f"{avg_humidity:.1f}%")
-
-st.divider()
 
 # ---- Tabs ----
 tab1, tab2, tab3 = st.tabs([
@@ -93,12 +99,52 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 with tab1:
+# --- narrative section, added before the temperature chart ---
+    st.markdown("""
+## The swing matters more than the average
+
+Bulloch County doesn't have a single "typical" day. Over the past 20 years, 
+temperatures here have ranged from a low of -5.1°C to a high of 33.3°C, 
+nearly a 40 degree difference between the coldest and hottest days on 
+record. Summers climb into the low 30s with predictable regularity, while 
+winters dip well below freezing more often than the region's reputation 
+might suggest.
+
+That rhythm shows up clearly in the chart below: sharp, repeating peaks 
+every summer, deep valleys every winter, with almost no flat stretches 
+in between. This isn't a place with a mild in-between season. It swings 
+hard, twice a year, every year.
+""")
+
     st.subheader("Temperature Over Time")
     fig_temp = px.line(filtered_df, x="date", y="temperature_c",
                         labels={"date": "Date", "temperature_c": "Temperature (°C)"})
     fig_temp.update_traces(line_color="#FF6B6B")
     fig_temp.update_xaxes(minallowed=x_min, maxallowed=x_max)
     st.plotly_chart(fig_temp, use_container_width=True)
+
+# --- narrative section, added before the precipitation chart ---
+    st.markdown("""
+## Statesboro's wettest day was followed by its driest month
+
+On October 7, 2016, Bulloch County recorded 124.51mm of rain in a single day, 
+the most rainfall this dataset has ever seen here. It wasn't an ordinary 
+storm: Hurricane Matthew's winds tore through the area overnight, killing 
+two people in Statesboro when trees fell on their homes early the next 
+morning, and leaving thousands without power for days.
+
+What's stranger is what happened next. Rather than a wet aftermath, the 
+region swung hard the other way. From October 16 to November 12, 2016, 
+Bulloch County went 28 consecutive days with essentially no rain, the 
+longest dry stretch in the past 20 years. The same month that brought the 
+area's worst flooding also produced its driest spell.
+
+It's a pattern that shows up elsewhere in the data too. A little under a 
+year later, Hurricane Irma brought another sharp spike, 74.94mm on 
+September 11, 2017, but nothing close to the drought that followed 
+Matthew. Big rain events here tend to be isolated, sudden, and gone almost 
+as fast as they arrived.
+""")
 
     st.subheader("Precipitation Over Time")
     fig_precip = px.bar(filtered_df, x="date", y="precipitation_mm",
