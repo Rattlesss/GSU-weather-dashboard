@@ -92,14 +92,15 @@ col3.metric("Wettest Day", f"{wettest_day['precipitation_mm']:.1f} mm",
 col4.metric("Avg Humidity", f"{avg_humidity:.1f}%")
 
 # ---- Tabs ----
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "Temperature & Precipitation",
     "Humidity & Wind",
-    "Solar, Pressure & Correlations"
+    "Solar, Pressure & Correlations",
+    "Closing thoughts"
 ])
 
 with tab1:
-# --- narrative section, added before the temperature chart ---
+# --- Temperature chart ---
     st.markdown("""
 ## The swing matters more than the average
 
@@ -123,7 +124,7 @@ hard, twice a year, every year.
     fig_temp.update_xaxes(minallowed=x_min, maxallowed=x_max)
     st.plotly_chart(fig_temp, use_container_width=True)
 
-# --- narrative section, added before the precipitation chart ---
+# --- Precipitation chart ---
     st.markdown("""
 ## Statesboro's wettest day was followed by its driest month
 
@@ -154,6 +155,29 @@ as fast as they arrived.
     st.plotly_chart(fig_precip, use_container_width=True)
 
 with tab2:
+# --- Dual-chart split ---
+    st.markdown("""
+## Hot days here aren't necessarily dry days
+
+You might expect temperature and humidity to move in opposite directions; 
+hot days feeling muggy, cold days feeling crisp, but Bulloch County doesn't 
+follow that pattern strongly. The two variables have a correlation of just 
+-0.11 across 20 years of data, close to no relationship at all. Humidity 
+sits anywhere from 50% to 90% at almost any temperature.
+
+There's a slight tendency for the very hottest days to run a bit drier, 
+visible as the scatter thins out toward the bottom right of the chart, 
+but it's a weak effect, not a rule. What actually drives humidity down 
+here is sunlight, not heat: solar radiation has a much stronger 
+relationship with humidity (-0.58) than temperature does.
+
+Wind tells a steadier story, for the most part. Daily wind speeds stay under 4 m/s on 
+a typical day, with variations here and there. The single windiest day in the dataset fell on September 11, 
+2017, with a speed of 8.78 m/s. Coincidentally, it's the same date as the county's second-largest precipitation 
+event. Hurricane Irma didn't just bring rain here; it brought the 
+strongest winds this dataset ever recorded.
+""")
+
     chart_col1, chart_col2 = st.columns(2)
 
     with chart_col1:
@@ -174,7 +198,30 @@ with tab2:
         fig_wind.update_xaxes(minallowed=x_min, maxallowed=x_max)
         st.plotly_chart(fig_wind, use_container_width=True)
 
+# --- explainer for the correlation figure cited in the narrative above ---
+    st.markdown("""
+**What "correlation" means here:** a number close to **+1** means two things 
+tend to rise and fall together, like temperature and solar radiation. A 
+number close to **-1** means one goes up as the other goes down, like 
+humidity and solar radiation. A number near **0**, like the -0.11 between 
+temperature and humidity above, means the two barely relate at all. 
+Knowing one doesn't tell you much about the other.
+""")
+
 with tab3:
+# --- Solar Radiation chart ---
+    st.markdown("""
+## Sunlight explains more about this climate than temperature does
+
+Solar radiation follows the same clear seasonal rhythm as temperature, 
+peaking in summer and dropping in winter, but it turns out to be the more 
+useful number for explaining what else is happening on a given day. It has 
+a stronger relationship with humidity (-0.58) than temperature does 
+(-0.11): cloudier, more humid days block sunlight regardless of how hot or 
+cold it is outside. Sunnier days also tend to run warmer too, with a +0.50 
+correlation to temperature, but the humidity link is the stronger of the two.
+""")
+
     st.subheader("Solar Radiation Over Time")
     fig_solar = px.line(filtered_df, x="date", y="solar_radiation_kwhm2",
                          labels={"date": "Date", "solar_radiation_kwhm2": "Solar Radiation (kWh/m²)"})
@@ -182,6 +229,18 @@ with tab3:
     fig_solar.update_xaxes(minallowed=x_min, maxallowed=x_max)
     st.plotly_chart(fig_solar, use_container_width=True)
 
+# --- Surface Pressure chart ---
+    st.markdown("""
+## Pressure drops mark the storms
+
+Surface pressure moves in a tighter, noisier band, mostly between 100 and 
+102 kPa, with occasional sharp drops that mark the passage of low-pressure 
+systems, including storms like the ones covered earlier in this dashboard. 
+Pressure has a moderate negative relationship with temperature (-0.44): 
+hotter days tend to come with slightly lower pressure, consistent with 
+the unstable, storm-prone conditions that show up here in late summer 
+and fall.
+""")
     st.subheader("Surface Pressure Over Time")
     fig_pressure = px.line(filtered_df, x="date", y="surface_pressure_kpa",
                             labels={"date": "Date", "surface_pressure_kpa": "Surface Pressure (kPa)"})
@@ -189,15 +248,97 @@ with tab3:
     fig_pressure.update_xaxes(minallowed=x_min, maxallowed=x_max)
     st.plotly_chart(fig_pressure, use_container_width=True)
 
+
+# --- how to read the correlation grid ---
+    st.markdown("""
+## How to read the grid below
+
+Every cell in this grid compares two variables and shows how closely they 
+move together, on a scale from -1 to +1. It's the same idea introduced 
+earlier with humidity and solar radiation, just applied to every 
+combination of variables at once.
+
+A value near **+1.00** means the two variables rise and fall together. 
+Temperature and solar radiation, at +0.50, are a good example: sunnier 
+days tend to be warmer days.
+
+A value near **-1.00** means they move in opposite directions. Humidity 
+and solar radiation, at -0.58, are the strongest example in this dataset: 
+more sunlight tends to come with less humidity, and vice versa.
+
+A value near **0.00** means the two barely relate at all. Temperature and 
+humidity, at -0.11, fall into this category. Knowing the temperature on a 
+given day tells you almost nothing about how humid it was.
+
+The diagonal running from top-left to bottom-right is always **1.00**, 
+because that's each variable compared to itself, a variable always 
+correlates perfectly with its own values. It's not a meaningful result, 
+just a byproduct of how the grid is built.
+
+One important caveat: correlation isn't causation. A strong relationship 
+between two variables doesn't prove one causes the other, only that they 
+tend to move together. The humidity/solar link, for example, likely 
+reflects a third factor, cloud cover, driving both at once, rather than 
+either variable directly causing the other.
+""")
+
     st.subheader("Correlation Between Variables")
     corr_columns = ["temperature_c", "precipitation_mm", "humidity_pct",
                      "wind_speed_ms", "solar_radiation_kwhm2", "surface_pressure_kpa"]
     corr = filtered_df[corr_columns].corr()
     fig_corr = px.imshow(corr, text_auto=".2f", color_continuous_scale="RdBu_r",
                           labels=dict(color="Correlation"))
-    # no x-axis constraint here either - it's a heatmap, not a time series
     st.plotly_chart(fig_corr, use_container_width=True)
 
+with tab4:
+    st.markdown("""
+## What the numbers agree on
+
+Twenty years of daily data all point to the same conclusion: Bulloch 
+County's weather isn't defined by any single variable. Solar radiation 
+is the closest thing to a common thread, tying most strongly to both 
+temperature and humidity, but even that relationship is moderate at best. 
+Precipitation and wind barely correlate with anything else in the dataset, 
+arriving on their own schedule regardless of what temperature, humidity, 
+or pressure are doing that day.
+
+That's the real takeaway from this dashboard. The averages are stable and 
+predictable. The extremes, like a storm that drops 124mm in a day and is 
+followed by a month of nothing, aren't. This is a county where the 
+exceptions matter more than the rule.
+""")
+
+    st.subheader("Extremes and Baselines")
+
+    variables = {
+        "Temperature (°C)": "temperature_c",
+        "Precipitation (mm)": "precipitation_mm",
+        "Humidity (%)": "humidity_pct",
+        "Wind Speed (m/s)": "wind_speed_ms",
+        "Solar Radiation (kWh/m²)": "solar_radiation_kwhm2",
+        "Surface Pressure (kPa)": "surface_pressure_kpa",
+    }
+
+    rows = []
+    for label, col in variables.items():
+        min_row = filtered_df.loc[filtered_df[col].idxmin()]
+        avg_val = filtered_df[col].mean()
+        max_row = filtered_df.loc[filtered_df[col].idxmax()]
+        rows.append({
+            "Variable": label,
+            "Min": f"{min_row[col]:.2f} | {min_row['date'].strftime('%b %d, %Y')}",
+            "Max": f"{max_row[col]:.2f} | {max_row['date'].strftime('%b %d, %Y')}",
+            "Avg": f"{avg_val:.2f}",
+        })
+
+    extremes_df = pd.DataFrame(rows)
+    # respects the sidebar date filter automatically, since it's built from filtered_df
+    st.dataframe(extremes_df, use_container_width=True, hide_index=True)
+    st.caption(
+        "Min values of 0.00 for precipitation occur on many days across "
+        "the dataset; the date shown is just the first occurrence, not a unique event."
+    )
+    
 st.divider()
 
 with st.expander("View raw data"):
@@ -205,3 +346,4 @@ with st.expander("View raw data"):
 
 st.divider()
 st.caption("Built by Rattles · NASA POWER API · Personal learning project, part of a GIS exploration series")
+
