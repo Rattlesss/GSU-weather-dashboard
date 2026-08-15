@@ -4,6 +4,16 @@ from sqlalchemy import create_engine
 
 load_dotenv()  # reads .env into environment variables
 
+def get_config(key):
+    value = os.getenv(key)
+    if value is None:
+        try:
+            import streamlit as st
+            value = st.secrets.get(key)
+        except Exception:
+            pass
+    return value
+
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
