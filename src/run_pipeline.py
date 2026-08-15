@@ -6,7 +6,7 @@ from fetch_data import fetch_weather_data_range
 from clean_data import clean_weather_data
 from load_data import load_weather_data
 
-CSV_PATH = "data/weather_2006_2026.csv"
+CSV_PATH = "../data/weather_2006_2026.csv"
 
 def run_pipeline():
     today = date.today().strftime("%Y%m%d")
