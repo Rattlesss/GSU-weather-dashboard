@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -uo pipefail
 
 echo "=== GSU Weather Dashboard: Environment Setup ==="
 
@@ -10,7 +10,7 @@ elif command -v docker-compose &> /dev/null; then
     DOCKER_COMPOSE="docker-compose"
 else
     echo "Neither 'docker compose' nor 'docker-compose' found - install Docker before continuing."
-    exit 1
+    return 1
 fi
 
 # 1. Create venv if it doesn't exist
@@ -31,7 +31,7 @@ if [ ! -f ".env" ]; then
     echo "No .env found - copying .env.example. Fill in real values before continuing!"
     cp .env.example .env
     echo "Edit .env now, then re-run this script or run.sh"
-    exit 1
+    return 1
 fi
 
 # 5. Bring up the DB container
