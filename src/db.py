@@ -31,3 +31,7 @@ engine = create_engine(
     DATABASE_URL,
     connect_args={"ssl_ca": CERT_PATH}
 )
+
+if __name__ == "__main__":
+    with engine.connect() as conn:
+        print("Connected successfully!")
