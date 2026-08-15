@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
-load_dotenv()  # reads .env into environment variables
+load_dotenv()  # reads .env into environment variables (local dev only)
 
 def get_config(key):
     value = os.getenv(key)
@@ -14,23 +14,20 @@ def get_config(key):
             pass
     return value
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
+DB_HOST = get_config("DB_HOST")
+DB_PORT = get_config("DB_PORT")
+DB_USER = get_config("DB_USER")
+DB_PASSWORD = get_config("DB_PASSWORD")
+DB_NAME = get_config("DB_NAME")
 
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+# Build an absolute path to the cert, based on this file's own location —
+# works no matter what directory the app is actually run from.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CERT_PATH = os.path.join(BASE_DIR, "..", "certs", "ca.pem")
+
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"ssl_ca": "../certs/ca.pem"}
+    connect_args={"ssl_ca": CERT_PATH}
 )
-
-if __name__ == "__main__":
-    try:
-        with engine.connect() as conn:
-            print("Connected successfully!")
-    except Exception as e:
-        print("Connection failed.")
-        print(f"Error: {e}")
