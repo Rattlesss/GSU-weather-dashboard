@@ -242,8 +242,9 @@ ends up costing you multiple hours.
 #### Dev notes
 
 - Today was pretty slow. Hit a venv error like an idiot. 
-  Installed packages to Fedora before realizing what I was doing.
-  Wasn't too bad, just needed pip for something. 
+  Installed packages to Fedora using dnfbefore realizing what I was doing.
+  I use Brew / Linuxbrew for all dev stuff, and want to keep them seperate.
+  Wasn't too bad of a mistake though, I just needed pip for something.
 - Note to self: when you swap machines, ensure you're in the venv
 - Will probally be getting more active with this project. Have some fun things planned.
 
@@ -266,8 +267,8 @@ ends up costing you multiple hours.
   accidentally scoped inside the loop instead of once above the
   function, and total_days never actually being incremented in an
   earlier draft.
-- Added a short comment on the `if __name__ == "__main__":` guard -
-  not obvious at a glance why it's there, worth the one-liner.
+- Added a short comment on the `if __name__ == "__main__":` guard.
+  It's not obvious at a glance why it's there, added to reduce confusion.
 
 #### verification
 - Ran run_pipeline.py twice back to back - colored output rendered
@@ -294,3 +295,136 @@ ends up costing you multiple hours.
 - Error handling/retries on the fetch loop
 - database-optimization branch verified working, not yet merged to main
 - Potential webpage integration using GCP. Part of broader idea. Far on timeline.
+
+
+
+## August 13, 2026
+
+#### setup.sh, run.sh
+
+- Added two cross-platform scripts to stop re-doing setup steps
+  every time I switch machines: setup.sh (creates venv if missing,
+  installs requirements, copies .env.example if .env is missing,
+  auto-detects docker compose vs docker-compose, brings up the
+  container and waits for healthy) and run.sh (runs the pipeline,
+  then launches the dashboard)
+- Auto-detection matters because Fedora only has the docker compose
+  plugin (space), not the standalone docker-compose binary MacOS has.
+  Same underlying issue from a few nights ago, now handled
+  automatically. I'll forget otherwise.
+- First real run on the Mac created a completely fresh venv (the old
+  one apparently wasn't there anymore) and caught that tqdm wasn't
+  installed there yet. This is exactly the kind of gap this script exists to
+  catch
+- Committed these on the wrong branch (database-optimization
+  instead of feature/dashboard-redesign) before realizing. Refered
+  to claude and pulled the two commits over cleanly via a merge into 
+  main. I'm getting a lot better with Git CLI, but mistakes like this
+  scare me. I really want to maintain a clean dev tree.
+
+#### the .env issues, hopefully actually resolved this time
+
+- Root cause behind weeks of intermittent access-denied errors: three
+  separate issues all at once (mistyped passwords at hidden prompts,
+  MariaDB only applying .env values on first container init, and
+  different .Env values across machines)
+- Decided the actual fix isn't a better .env.example, it's just
+  writing the real values down somewhere durable. Set up Bitwarden,
+  saved the finalized credentials there
+- Reconciled both machines' real .env files to match going forward
+- Fedora and MacOS now both have updated .Env files. Problem appears
+  to be fixed. Will revisit at first instance of failure. I'm tired
+  of dealing with this exact same problem. I just want my DB to work.
+
+
+
+## August 16, 2026
+
+#### dashboard redesign, feature/dashboard-redesign branch
+
+- Rebuilt all three original tabs (Temperature & Precipitation,
+  Humidity & Wind, Solar/Pressure/Correlations) with real narrative
+  sections instead of bare charts.Added claim-first headers, context
+  paragraphs before each chart, "OWID-style" but with more text than
+  OWID typically uses
+- Queried the actual data instead of guessing at "interesting"
+  moments: confirmed the all-time wettest day (Oct 7, 2016, 124.51mm)
+  and the longest dry streak (Oct 16-Nov 12, 2016, 28 days) both trace
+  back to Hurricane Matthew, and the single windiest day (Sept 11,
+  2017, 8.78 m/s) is the same date as the second-largest rainfall
+  event; Hurricane Irma
+- Fixed a real bug in a DATEDIFF-based streak query along the way:
+  wrong syntax was silently producing 3,938 warnings and one bogus
+  3,938-day "streak". Still have some learning to do with SQL.
+- Added a "how to read this" explainer for the correlation heatmap,
+  written for someone with zero stats background, plus a causation
+  caveat
+- Added a 4th tab: min/max/avg table for all six
+  variables, dates folded into each cell, plus the correlation
+  conclusion moved here as a standalone closer
+- Fixed the metric cards showing dates with no year (leftover from
+  the single-year version) and hid the misleading up/down delta
+  arrows via a small CSS override, since Streamlit has no built-in
+  way to suppress just the icon
+- Merged into main via --no-ff, going forward that's my standard for
+  every branch merge from here on, want the diverge/reconverge shape
+  visible in the git graph
+
+
+
+## August 16, 2026
+
+#### rattles.dev
+
+- Built my personal portfolio site, hosted on GitHub Pages, Astro +
+  plain HTML/CSS
+- Added a project card for the weather dashboard: casual-but-technical
+  blurb, correctly called it an ETL pipeline, tags for the actual
+  stack (Python, ETL Pipeline, NASA API, MariaDB, Docker, Streamlit,
+  Plotly)
+
+#### went public: Aiven + Streamlit Community Cloud
+
+- Deployed for real: MariaDB moved to Aiven (managed hosting),
+  dashboard deployed on Streamlit Community Cloud, both linked from
+  rattles.dev
+- Learned that Aiven's free tier auto-powers-off unused
+  services: confirmed via the event log; not a bug, just the
+  documented behavior
+- Upgraded to Aiven's Developer tier to stop the auto-shutoffs going
+  forward, using existing trial credit rather than paying immediately
+
+
+
+## August 19, 2026
+
+#### scheduled data refresh via GitHub Actions
+
+- Realized the deployed version has no way to stay current on its
+  own - Streamlit Cloud only reads from Aiven, it never runs the
+  pipeline. Someone (me) has to actually trigger a refresh
+- Added .github/workflows/update-data.yml: runs run_pipeline.py on a
+  weekly cron schedule, using GitHub-hosted runners and repo secrets
+  for the Aiven credentials - zero dependency on my own machine being
+  on
+- Also added workflow_dispatch so it can be triggered manually from
+  the Actions tab without waiting for the schedule
+- Weekly instead of daily for now, full 20-year re-fetch every day
+  felt wasteful. The incremental-fetch idea from a few nights ago is
+  still on the table if this needs to run more often later
+- Clarified for myself how prod actually works now: dashboard-only
+  code changes just need a git push to main and Streamlit Cloud
+  picks it up automatically. Anything that changes what's actually in
+  the database needs to be run against Aiven directly, not just
+  pushed as code
+
+### Running ideas
+- Incremental fetching (still theorized, not built - matters more now
+  that there's an actual recurring scheduled job)
+- Error handling/retries on the fetch loop
+- Streamlit not containerized (Docker still only wraps MariaDB
+  locally)
+- HP Pavilion server - now its own separate project/thread, not
+  starting until rattles.dev and the dashboard redesign were solidly
+  done (they are now)
+- Dashboard additons: Metric/SAE slider, more narative work, coloring
