@@ -428,3 +428,42 @@ ends up costing you multiple hours.
   starting until rattles.dev and the dashboard redesign were solidly
   done (they are now)
 - Dashboard additons: Metric/SAE slider, more narative work, coloring
+
+
+
+## August 19, 2026
+
+#### metric/imperial unit toggle
+
+- Added a segmented control pill toggle (°C / °F) top right, next to the
+  title, instead of burying it in the sidebar with the date slider.
+  I think this choice makes it more visible and coherent.
+- Conversion happens at display only, nothing gets stored in the DB.
+  Same decision made when this feature was first theorized weeks ago:
+  cheap, deterministic math, no reason to precompute and risk drift
+  between two stored versions on the database (plus halves the rows needed)
+- Added conversion helpers (c_to_f, mm_to_in, ms_to_mph, kpa_to_inhg)
+  plus formatter functions (fmt_temp, fmt_precip, fmt_wind, fmt_pressure)
+  that take the unit toggle's state and return an already formatted
+  string. tried to keep every call site simple, one function call instead of
+  repeated if/else scattered through the file
+- Humidity (%) and solar radiation (kWh/m²) stay unit agnostic regardless
+  of the toggle. No standard imperial equivalent (that people would actually
+  recognize) for either. Nobody knows what BTU/ft^2 is
+- Converted everything: metric cards, all four chart axes/labels, every
+  hardcoded number inside the narrative markdown blocks, and the
+  Min/Max/Avg table
+- Reworded the temperature section's "40 degree swing" framing. The
+  original fix hardcoded C and F in an awkward parenthetical
+  regardless of which unit was active. Now it's phrased qualitatively
+  so it reads clean in either unit system without restating the number
+  twice
+
+#### verification
+- Ran locally against Aiven directly since Docker Desktop wasn't running
+  locally (Didn't need it tbf)
+- Verified conversions by hand: 33.26°C to 91.9°F, -5.1°C to 22.8°F,
+  124.51mm to 4.90in, all checked out against the formulas
+- Confirmed toggle correctly updates metric cards, charts, and
+  narrative text together; pushed to prod
+
