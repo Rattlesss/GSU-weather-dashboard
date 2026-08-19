@@ -219,6 +219,16 @@ __marimo__/
 
 # Setup checklist
 .day1_setup.md
+day1_setup.md
 
 # Data/CSV folder
 data/*.csv
+
+# macOS
+.DS_Store
+
+# JetBrains IDEs
+.idea/
+
+# Misc project artifacts
+hot_days.parquet
