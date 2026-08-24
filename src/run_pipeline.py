@@ -1,6 +1,7 @@
 """
 Runs the full weather datat pipeline: fetch -> clean -> save CSV -> load into DB.
 """
+import os
 from datetime import date
 from fetch_data import fetch_weather_data_range
 from clean_data import clean_weather_data
@@ -18,6 +19,7 @@ def run_pipeline():
     cleaned = clean_weather_data(raw)
 
     print(f"Saving to {CSV_PATH}...")
+    os.makedirs(os.path.dirname(CSV_PATH), exist_ok=True)
     cleaned.to_csv(CSV_PATH, index=False)
 
     print("Loading into database...")
