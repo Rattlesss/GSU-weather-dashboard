@@ -1,7 +1,6 @@
 ## July 8, 2026
 
 #### environment & project setup
-
 - Set up GitHub repo (GSU-weather-dashboard), connected local PyCharm project
 - Created project folder structure (src/, dashboard/, data/raw/)
 - Set up Python virtualenv, installed requests, pandas, sqlalchemy, pymysql,
@@ -17,7 +16,6 @@
   is MERRA2 (reanalysis model, not direct station observations).
 
 #### schema design
-
 - Decided to expand beyond original 2 variables (temperature, precipitation)
   to 6 total: T2M, PRECTOTCORR, RH2M, WS2M, ALLSKY_SFC_SW_DWN, PS
 - Designed and created schema.sql: single table `daily_weather`, one row
@@ -33,7 +31,6 @@
   since no data has been loaded; safe to iterate on schema early
 
 #### db.py, fetch_data.py, clean_data.py
-
 - Built db.py: loads DB credentials from .env using python-dotenv, builds
   a SQLAlchemy connection string, creates a reusable engine object.
   Tested successful connection to weather_project database.
@@ -51,7 +48,6 @@
   missing-value placeholder (-99 vs -999).
 
 #### load_data.py, full pipeline working
-
 - Built load_data.py: loads cleaned DataFrame into daily_weather using
   REPLACE INTO with named parameters (safe against SQL injection, and
   re-runnable without creating duplicate rows for the same date).
@@ -64,7 +60,6 @@
   first 5 rows, values look correct across all 6 variables.
 
 #### dashboard build
-
 - Built dashboard/app.py: Streamlit dashboard with sidebar date filter,
   summary metric cards (hottest/coldest/wettest day, avg humidity),
   tabbed layout across 3 sections, and a correlation heatmap
@@ -79,7 +74,6 @@
 ## August 3, 2026
 
 #### docker-compose.yml
-
 - Added MariaDB 11 service, containerized with a named volume
     (mariadb_data) so data persists across container restarts
 - Mounted src/schema.sql as the init script - daily_weather table
@@ -91,14 +85,12 @@
     can be checked before the app or a script tries to connect
     
 #### .env.example
-
 - Added a template documenting the required env vars
     (DB_ROOT_PASSWORD, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST,
     DB_PORT) with no real secrets, so the repo is cloneable without
     guessing at what .env needs to contain
     
 #### bug: user creation silently failing
-
 - MARAIDB_PASSWORD typo (should be MARIADB_PASSWORD) in the
     environment block meant MARIADB_USER had no valid password to
     pair with - container started fine and created the database, but
@@ -110,7 +102,6 @@
     and reinitialized clean
     
 #### verification
-
 - Brought the container up with docker-compose up -d, confirmed
     status reached healthy
 - Connected via mycli as the scoped weather_app user (not root) -
@@ -126,7 +117,6 @@
 ## August 8, 2026
 
 #### Personal Dev Explanation
-
 - Before we get into the devlog for today, I have some explaining to do.
 - Installed / Configured a new Fedora KDE Plasma system today, 
 has all the same dev features as my MacOS setup!
@@ -162,7 +152,6 @@ ends up costing you multiple hours.
 - Maybe this is the end of QoL changes? Who knows.
 
 #### run_pipeline.py
-
 - Added a single orchestrator script (fetch -> clean -> save CSV -> load)
   after realizing fetch_data.py and load_data.py's __main__ blocks each
   independently called the fetch function - meant NASA's API was being
@@ -174,12 +163,10 @@ ends up costing you multiple hours.
   without burning API calls, useful after wiping the Docker volume
   
 #### .gitignore
-
 - Added data/*.csv - the generated CSV is regeneratable from the API
   and sizeable (7,500+ rows), no reason to track it in git
   
 #### bug fixes caught while wiring this together
-
 - Several syntax errors from manual edits (missing parens/quotes,
   swapped underscores, mismatched CSV_PATH casing) - caught one at a
   time by actually reading the tracebacks instead of guessing. Who knew
@@ -191,7 +178,6 @@ ends up costing you multiple hours.
   resolve. Fixed by running from repo root: python src/run_pipeline.py
   
 #### cross-machine Docker verification (Fedora)
-
 - Docker on Fedora runs as a systemd service, not a background app -
   confirmed via systemctl status docker, no equivalent to Docker
   Desktop's menu bar indicator
@@ -210,7 +196,6 @@ ends up costing you multiple hours.
   commits were auto-attributing to a generic hostname-based identity)
   
 #### verification
-
 - Ran run_pipeline.py end-to-end from repo root on Fedora: 21 years
   fetched (2006-2026), cleaned, saved to CSV, loaded into daily_weather
 - Confirmed via mycli: 7,525 rows, MIN(date)/MAX(date) = 2006-01-01 to
@@ -240,7 +225,6 @@ ends up costing you multiple hours.
 ## August 9, 2026
 
 #### Dev notes
-
 - Today was pretty slow. Hit a venv error like an idiot. 
   Installed packages to Fedora using dnfbefore realizing what I was doing.
   I use Brew / Linuxbrew for all dev stuff, and want to keep them seperate.
@@ -301,7 +285,6 @@ ends up costing you multiple hours.
 ## August 13, 2026
 
 #### setup.sh, run.sh
-
 - Added two cross-platform scripts to stop re-doing setup steps
   every time I switch machines: setup.sh (creates venv if missing,
   installs requirements, copies .env.example if .env is missing,
@@ -323,7 +306,6 @@ ends up costing you multiple hours.
   scare me. I really want to maintain a clean dev tree.
 
 #### the .env issues, hopefully actually resolved this time
-
 - Root cause behind weeks of intermittent access-denied errors: three
   separate issues all at once (mistyped passwords at hidden prompts,
   MariaDB only applying .env values on first container init, and
@@ -341,7 +323,6 @@ ends up costing you multiple hours.
 ## August 16, 2026
 
 #### dashboard redesign, feature/dashboard-redesign branch
-
 - Rebuilt all three original tabs (Temperature & Precipitation,
   Humidity & Wind, Solar/Pressure/Correlations) with real narrative
   sections instead of bare charts.Added claim-first headers, context
@@ -375,7 +356,6 @@ ends up costing you multiple hours.
 ## August 16, 2026
 
 #### rattles.dev
-
 - Built my personal portfolio site, hosted on GitHub Pages, Astro +
   plain HTML/CSS
 - Added a project card for the weather dashboard: casual-but-technical
@@ -384,7 +364,6 @@ ends up costing you multiple hours.
   Plotly)
 
 #### went public: Aiven + Streamlit Community Cloud
-
 - Deployed for real: MariaDB moved to Aiven (managed hosting),
   dashboard deployed on Streamlit Community Cloud, both linked from
   rattles.dev
@@ -399,7 +378,6 @@ ends up costing you multiple hours.
 ## August 19, 2026
 
 #### scheduled data refresh via GitHub Actions
-
 - Realized the deployed version has no way to stay current on its
   own - Streamlit Cloud only reads from Aiven, it never runs the
   pipeline. Someone (me) has to actually trigger a refresh
@@ -434,7 +412,6 @@ ends up costing you multiple hours.
 ## August 19, 2026
 
 #### metric/imperial unit toggle
-
 - Added a segmented control pill toggle (°C / °F) top right, next to the
   title, instead of burying it in the sidebar with the date slider.
   I think this choice makes it more visible and coherent.
@@ -467,3 +444,45 @@ ends up costing you multiple hours.
 - Confirmed toggle correctly updates metric cards, charts, and
   narrative text together; pushed to prod
 
+
+
+## August 24, 2026
+
+#### fixing the broken cron job
+- The Monday cron ran for the first time and failed immediately. I got the
+  GitHub email notification, exit code 1 in 29s. Glad I set up
+  workflow_dispatch last time, made debugging this way faster
+- Root issue was DATABASE_URL resolving with an empty port
+  (`ValueError: invalid literal for int() with base 10: ''`) - traced it
+  back to DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME never actually
+  existing as repo secrets. I'd saved everything under one secret,
+  AIVEN_MARIADB_ENV, instead of the five separate ones db.py expects
+- Deleted that broken secret and added the five secrets individually 
+  using the Aiven connection info. This fixed the connection issue.
+- Second failure right after: `OSError: Cannot save file into a
+  non-existent directory: '../data'`. data/ is git ignored for now,
+  so it never existed on the fresh CI checkout even thoughit exists 
+  locally. Added `os.makedirs(os.path.dirname(CSV_PATH),exist_ok=True)` 
+  before the to_csv call so this can't happen again regardless of environment
+- Push got rejected separately (GH007, email privacy) since my commit
+  author was still my real email. Switched user.email to my GitHub
+  noreply address and amended the commit with --reset-author
+- Re-ran manually via workflow_dispatch: pipeline completed clean,
+  loaded 7541 rows into daily_weather
+- First time interacting with CI/CD work, although theres no CI here.
+  
+#### notes to self
+- The CSV write during the pipeline run is not a backup. GitHub Actions
+  VMs aren't persistant, so weather_2006_2026.csv gets destroyed the second
+  the job finishes. Only the database rows persist. If I want an actual
+  CSV backup, I need to explicitly upload it as a workflow artifact (or
+  push it somewhere external). not built yet, something to keep in mind for V3
+  
+### Running ideas
+- CSV backup via actions/upload-artifact, or pushing to external storage.
+  currently nothing survives past the job run except the DB rows
+- Incremental fetching (still theorized, not built)
+- Error handling/retries on the fetch loop
+- Streamlit not containerized (Docker still only wraps MariaDB locally)
+- Use another GitHub Actions job to add CI functionality. Would help fix
+  mistakes before they get pushed to production and affect the Aiven instance.
