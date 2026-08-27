@@ -164,8 +164,7 @@ reputation might suggest.
 
 That rhythm shows up clearly in the chart below: sharp, repeating peaks 
 every summer, deep valleys every winter, with almost no flat stretches 
-in between. This isn't a place with a mild in-between season. It swings 
-hard, twice a year, every year.
+in between. This isn't a place with a mild in-between season.
 """)
 
     st.subheader("Temperature Over Time")
@@ -194,8 +193,7 @@ area's worst flooding also produced its driest spell.
 It's a pattern that shows up elsewhere in the data too. A little under a 
 year later, Hurricane Irma brought another sharp spike, {fmt_precip(74.94, unit_system)} on 
 September 11, 2017, but nothing close to the drought that followed 
-Matthew. Big rain events here tend to be isolated, sudden, and gone almost 
-as fast as they arrived.
+Matthew.
 """)
 
     st.subheader("Precipitation Over Time")
@@ -226,8 +224,7 @@ Wind tells a steadier story, for the most part. Daily wind speeds stay under
 {fmt_wind(4, unit_system)} on a typical day, with variations here and there. 
 The single windiest day in the dataset fell on September 11, 2017, with a 
 speed of {fmt_wind(8.78, unit_system)}. Coincidentally, it's the same date as the county's 
-second-largest precipitation event. Hurricane Irma didn't just bring rain 
-here; it brought the strongest winds this dataset ever recorded.
+second-largest precipitation event. Hurricane Irma came with the whole package, Rain and Wind galore.
 """)
 
     chart_col1, chart_col2 = st.columns(2)
@@ -353,8 +350,7 @@ or pressure are doing that day.
 
 That's the real takeaway from this dashboard. The averages are stable and 
 predictable. The extremes, like a storm that drops a huge amount of rain 
-in a day and is followed by a month of nothing, aren't. This is a county 
-where the exceptions matter more than the rule.
+in a day and is followed by a month of nothing, aren't.
 """)
 
     st.subheader("Extremes and Baselines")
