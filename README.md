@@ -2,7 +2,7 @@
 
 A live dashboard that pulls ~20 years of daily weather data for the Georgia Southern University area (Statesboro, Bulloch County, GA) from NASA's POWER API, stores it in MariaDB, and displays it with Streamlit.
 
-This was my first solo Python/SQL project, done as a step toward a future GIS-based capstone project.
+This was my first solo Python/SQL project, done as a step towards future Data Engineering / ETL projects.
 
 **Live dashboard:** [rattles.dev](https://rattles.dev/projects) links to the deployed version, hosted on Streamlit Community Cloud against a managed Aiven MariaDB instance. Nothing below is needed just to view it.
 
@@ -59,9 +59,9 @@ NASA POWER API (power.larc.nasa.gov). Data is from the MERRA2 reanalysis model, 
  
 I used Claude (AI) throughout this project to learn Python, SQL, and Streamlit as I went, since this was my first solo project in this stack. It walked me through things like setting up a virtual environment, writing the SQLAlchemy connection, and reshaping the NASA API's nested JSON into a flat table.
  
-I made the actual decisions along the way, like expanding from the original 2 to 6 weather variables, starting with a native MariaDB install before later containerizing with Docker, and how to size and document the schema. I also caught and fixed a number of real bugs myself while testing each piece, including typos in column names, a missing SQL clause, and a wrong missing-value code.
+I made the actual decisions along the way, like expanding from the original 2 to 6 weather variables, starting with a native MariaDB install before later containerizing with Docker, and how to size and document the schema. I also caught and fixed a number of real bugs myself while testing each piece, including typos in column names, a missing SQL clause, and a wrong missing-value code. All of these decisions can be found in the DEVLOG.md along with all my notes.
 
-I'm being upfront about this because I think it's a normal way to learn in our current coding environment, and I'd rather explain the process honestly than pretend I wrote all of this unaided.
+I'm being upfront about this because I think it's a normal way to learn in our current coding environment, and I'd rather explain the process honestly than pretend I wrote all of this unaided. Tl;Dr Claude was used to aid the learning process, and was not used to replace human decision-making or structural decisions. It only served to help as a learning tool. All decisions are self-made.
  
 ## Author
  
