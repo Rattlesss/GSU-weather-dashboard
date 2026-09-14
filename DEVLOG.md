@@ -486,3 +486,9 @@ ends up costing you multiple hours.
 - Streamlit not containerized (Docker still only wraps MariaDB locally)
 - Use another GitHub Actions job to add CI functionality. Would help fix
   mistakes before they get pushed to production and affect the Aiven instance.
+
+
+
+#### August 25, 2026
+
+### Local docker SSL fix + readme accuracy update
