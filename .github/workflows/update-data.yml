@@ -5,6 +5,10 @@ on:
     - cron: "0 6 * * 1" # runs every Monday at 6:00 AM UTC
   workflow_dispatch:
 
+permissions:
+  contents: read  
+  actions: write   
+
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
@@ -29,3 +33,9 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USE_SSL: true
         run: python src/run_pipeline.py
+        
+      - name: Keepalive
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable update-data.yml
